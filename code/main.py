@@ -233,8 +233,8 @@ def bilinear_displacement(dx, dy, image):
     move_dx = (1 - dx) * identity_x + dx * vec_x
     move_dy = (1 - dy) * identity_y + dy * vec_y
 
-    displaced_image = np.matmul(np.matmul(move_dx, image), move_dy)
-    print(displaced_image)
+    displaced_image_tmp = np.matmul(move_dx, image)
+    displaced_image = np.matmul(displaced_image_tmp, move_dy)
     return displaced_image
 
 
@@ -281,7 +281,7 @@ displaced_cameraman = general_displacement(150.7, 110.4, gray_cameraman)
 fig43, axes = plt.subplots(1, 2, figsize=(10, 10))
 axes[0].imshow(gray_cameraman, cmap='gray')
 axes[0].set_title("original cameraman")
-axes[1].imshow(displaced_cameraman)
+axes[1].imshow(displaced_cameraman, cmap='gray')
 axes[1].set_title("displaced cameraman by [150.7, 110.4]")
 plt.tight_layout()
 plt.show()
