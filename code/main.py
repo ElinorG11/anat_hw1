@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import cv2
 
 # --------------------------------------------------Q1-------------------------------------------------- #
-
+'''
 # Q1.a
 # imread() returns uint8 ndarray with BGR color channel
 building = cv2.imread(filename='../my_data/building.jpg')
@@ -177,6 +177,7 @@ plt.show()
 
 # Q2.c
 ampPort_phaseParrot = np.multiply(amp_portrait, np.exp(1j * phase_parrot))
+
 ampParrot_phasePort = np.multiply(amp_parrot, np.exp(1j * phase_portrait))
 
 fig23, axes = plt.subplots(1, 2, figsize=(10, 10))
@@ -192,6 +193,7 @@ random_phase = np.random.uniform(low=-np.pi, high=np.pi, size=gray_portrait.shap
 random_amp = np.random.uniform(low=0, high=100, size=gray_portrait.shape)
 
 ampPort_phaseRdm = np.multiply(amp_portrait, np.exp(1j * random_phase))
+
 ampRdm_phasePort = np.multiply(random_amp, np.exp(1j * phase_portrait))
 
 fig24, axes = plt.subplots(1, 2, figsize=(10, 10))
@@ -202,10 +204,92 @@ axes[1].set_title("Portrait Phase with Random Amplitude")
 plt.tight_layout()
 plt.show()
 
+# --------------------------------------------------Q3-------------------------------------------------- #
+
+def func(x, y):
+    pi = 3.141
+    return np.sin(2*pi*(2/512)*(x+y))+\
+           np.sin(2*pi*(5/512)*x)+\
+           np.sin(2*pi*(40/512)*y)
+
+# Q3.a
+x = np.arange(0, 512, 1)
+y = np.arange(0, 512, 1)
+X, Y = np.meshgrid(x, y)  # grid of point
+Z = func(X, Y)  # evaluation of the function on the grid
+plt.imshow(Z, cmap='gray')
+plt.title('2D Fourier transform of the grayscale of the F_1(x,y)')
+plt.tight_layout()
+plt.show()
+
+# Q3.b
+fft_Z = np.fft.fftshift(np.fft.fft2(Z))
+fft_gray = np.log(1 + np.abs(fft_Z))
+plt.imshow(fft_gray, cmap='gray')
+plt.title('2D Fourier transform of the grayscale of the F_1(x,y)')
+plt.tight_layout()
+plt.show()
+
+# Q3.c
+x = np.arange(0, 512, 10)
+y = np.arange(0, 512, 10)
+X, Y = np.meshgrid(x, y)  # grid of point
+Z = func(X, Y)  # evaluation of the function on the grid
+
+fft_Z = np.fft.fftshift(np.fft.fft2(Z))
+fft_gray = np.log(1 + np.abs(fft_Z))
+fig33, axes = plt.subplots(1, 2, figsize=(10, 10))
+axes[0].imshow(Z, cmap='gray')
+axes[0].set_title("F_10(x,y) in space domain")
+axes[1].imshow(fft_gray, cmap='gray')
+axes[1].set_title("F_10(x,y) in frequency domain")
+plt.tight_layout()
+plt.show()
+
+# Q3.e
+mandrill = cv2.imread(str('../given_data/mandrill.jpg'))
+gray_mandrill = cv2.cvtColor(mandrill, cv2.COLOR_BGR2GRAY)
+
+fft_mandrill = np.fft.fftshift(np.fft.fft2(gray_mandrill))
+fft_mandrill = np.log(1 + np.abs(fft_mandrill))
+fig35, axes = plt.subplots(1, 2, figsize=(10, 10))
+axes[0].imshow(gray_mandrill, cmap='gray')
+axes[0].set_title("grayscale Mandrill")
+axes[1].imshow(fft_mandrill, cmap='gray')
+axes[1].set_title("grayscale Mandrill in frequency domain")
+plt.tight_layout()
+plt.show()
+
+# Q3.f
+down_sampled_mandrill = gray_mandrill[::4, ::4]
+
+fft_down_sampled_mandrill = np.fft.fftshift(np.fft.fft2(gray_mandrill))
+fft_down_sampled_mandrill = np.log(1 + np.abs(fft_down_sampled_mandrill))
+fig36, axes = plt.subplots(1, 2, figsize=(10, 10))
+axes[0].imshow(down_sampled_mandrill, cmap='gray')
+axes[0].set_title("grayscale downsampled Mandrill")
+axes[1].imshow(fft_down_sampled_mandrill, cmap='gray')
+axes[1].set_title("grayscale downsampled Mandrill in frequency domain")
+plt.tight_layout()
+plt.show()
+
 
 # --------------------------------------------------Q4-------------------------------------------------- #
 
 # Q4.a
+def expand(mat):
+    (row, col) = np.shape(mat)
+
+    new_mat = np.zeros((row + 1, col + 1))
+
+    new_mat[0:row, 0:col] = mat
+    new_mat[row, :col] = mat[0, :]
+    new_mat[:row, col] = mat[:, 0]
+    new_mat[row, col] = mat[0, 0]
+
+    return new_mat
+
+
 def bilinear_displacement(dx, dy, image):
     """
     Calculate the displacement of a pixel using a bilinear interpolation.
@@ -218,23 +302,18 @@ def bilinear_displacement(dx, dy, image):
 
     (rows, cols) = np.shape(image)
 
-    identity_x = np.identity(rows)
+    vec_x = np.array([1 - dx, dx])
+    vec_y = np.array([1 - dy, dy]).T
+    neighbors = np.zeros((2, 2))
 
-    vec_x = np.zeros((rows, rows))
-    i, j = np.indices(vec_x.shape)
-    vec_x[i == j - 1] = 1
+    displaced_image = np.zeros((rows, cols))
 
-    identity_y = np.identity(cols)
+    expanded_image = expand(image)
+    for row in range(rows):
+        for col in range(cols):
+            neighbors = expanded_image[row:row + 2, col:col + 2]
+            displaced_image[row, col] = np.matmul(np.matmul(vec_x, neighbors), vec_y)
 
-    vec_y = np.zeros((cols, cols))
-    i, j = np.indices(vec_y.shape)
-    vec_y[i == j + 1] = 1
-
-    move_dx = (1 - dx) * identity_x + dx * vec_x
-    move_dy = (1 - dy) * identity_y + dy * vec_y
-
-    displaced_image_tmp = np.matmul(move_dx, image)
-    displaced_image = np.matmul(displaced_image_tmp, move_dy)
     return displaced_image
 
 
@@ -256,16 +335,12 @@ def general_displacement(dx, dy, image):
 
     # shift by integer value
     displaced_x_image = np.zeros((np.shape(image)))  # x shift
-    if dx_int >= 0:
-        displaced_x_image[dy_int:, :] = image[:rows-dy_int, :]
-    else:
-        displaced_x_image[0:rows-dy_int, :] = image[dy_int:, :]
+    displaced_x_image[dy_int:, :] = image[:rows - dy_int, :]
+    displaced_x_image[:rows - dy_int, :] = image[dy_int:, :]
 
     displaced_y_image = np.zeros((np.shape(image)))  # y shift
-    if dy_int >= 0:
-        displaced_y_image[:, dx_int:] = displaced_x_image[:, 0:cols-dx_int]
-    else:
-        displaced_y_image[:, 0:cols-dx_int] = displaced_x_image[:, dx_int:]
+    displaced_y_image[:, :dx_int] = displaced_x_image[:, cols - dx_int:]
+    displaced_y_image[:, cols - dx_int:] = displaced_x_image[:, :dx_int]
 
     # shift by non-natural value
     displaced_image = bilinear_displacement(dx_fraction, dy_fraction, displaced_y_image)
@@ -283,5 +358,28 @@ axes[0].imshow(gray_cameraman, cmap='gray')
 axes[0].set_title("original cameraman")
 axes[1].imshow(displaced_cameraman, cmap='gray')
 axes[1].set_title("displaced cameraman by [150.7, 110.4]")
+plt.tight_layout()
+plt.show()
+'''
+# Q4.d
+ryan = cv2.imread(filename='../given_data/Ryan.jpg')
+gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
+
+(row, col) = np.shape(gray_ryan)
+filter = np.zeros((row, col))
+
+radius = row / 6
+
+x, y = np.indices(gray_ryan.shape)
+mask = (x - row / 4) ** 2 + (y - 3 * col / 4) ** 2 <= radius ** 2
+filter[mask] = 1
+
+filtered_ryan = np.multiply(filter, gray_ryan)
+
+fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
+axes[0].imshow(gray_ryan, cmap='gray')
+axes[0].set_title("original grayscale ryan")
+axes[1].imshow(filtered_ryan, cmap='gray')
+axes[1].set_title("filtered ryan")
 plt.tight_layout()
 plt.show()
