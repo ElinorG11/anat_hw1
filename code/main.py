@@ -25,6 +25,8 @@ fft_gray_building = np.fft.fftshift(np.fft.fft2(gray_building))
 fft_gray = np.log(1 + np.abs(fft_gray_building))
 plt.imshow(fft_gray, cmap='gray')
 plt.title('2D Fourier transform of the grayscale of the building picture')
+plt.xlabel(r'$ \omega_1 $')
+plt.ylabel(r'$ \omega_2 $')
 plt.tight_layout()
 plt.show()
 
@@ -203,7 +205,7 @@ axes[1].imshow(np.abs(np.fft.ifft2(np.fft.ifftshift(ampRdm_phasePort))), cmap='g
 axes[1].set_title("Portrait Phase with Random Amplitude")
 plt.tight_layout()
 plt.show()
-
+'''
 # --------------------------------------------------Q3-------------------------------------------------- #
 
 def func(x, y):
@@ -218,7 +220,9 @@ y = np.arange(0, 512, 1)
 X, Y = np.meshgrid(x, y)  # grid of point
 Z = func(X, Y)  # evaluation of the function on the grid
 plt.imshow(Z, cmap='gray')
-plt.title('2D Fourier transform of the grayscale of the F_1(x,y)')
+plt.title(r'2D Fourier transform of the grayscale of the $F_1(x,y)$')
+plt.xlabel(r'$\omega_1$')
+plt.ylabel(r'$\omega_2$')
 plt.tight_layout()
 plt.show()
 
@@ -226,7 +230,9 @@ plt.show()
 fft_Z = np.fft.fftshift(np.fft.fft2(Z))
 fft_gray = np.log(1 + np.abs(fft_Z))
 plt.imshow(fft_gray, cmap='gray')
-plt.title('2D Fourier transform of the grayscale of the F_1(x,y)')
+plt.title(r'2D Fourier transform of the grayscale of the $F_1(x,y)$')
+plt.xlabel(r'$\omega_1$')
+plt.ylabel(r'$\omega_2$')
 plt.tight_layout()
 plt.show()
 
@@ -240,9 +246,13 @@ fft_Z = np.fft.fftshift(np.fft.fft2(Z))
 fft_gray = np.log(1 + np.abs(fft_Z))
 fig33, axes = plt.subplots(1, 2, figsize=(10, 10))
 axes[0].imshow(Z, cmap='gray')
-axes[0].set_title("F_10(x,y) in space domain")
+axes[0].set_title(r"$F_{10}(x,y)$ in space domain")
 axes[1].imshow(fft_gray, cmap='gray')
-axes[1].set_title("F_10(x,y) in frequency domain")
+axes[1].set_title(r"$F_{10}(x,y)$ in frequency domain")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel(r'$\omega_1$')
+axes[1].set_ylabel(r'$\omega_2$')
 plt.tight_layout()
 plt.show()
 
@@ -257,6 +267,10 @@ axes[0].imshow(gray_mandrill, cmap='gray')
 axes[0].set_title("grayscale Mandrill")
 axes[1].imshow(fft_mandrill, cmap='gray')
 axes[1].set_title("grayscale Mandrill in frequency domain")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel(r'$\omega_1$')
+axes[1].set_ylabel(r'$\omega_2$')
 plt.tight_layout()
 plt.show()
 
@@ -270,6 +284,10 @@ axes[0].imshow(down_sampled_mandrill, cmap='gray')
 axes[0].set_title("grayscale downsampled Mandrill")
 axes[1].imshow(fft_down_sampled_mandrill, cmap='gray')
 axes[1].set_title("grayscale downsampled Mandrill in frequency domain")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel(r'$\omega_1$')
+axes[1].set_ylabel(r'$\omega_2$')
 plt.tight_layout()
 plt.show()
 
@@ -358,9 +376,13 @@ axes[0].imshow(gray_cameraman, cmap='gray')
 axes[0].set_title("original cameraman")
 axes[1].imshow(displaced_cameraman, cmap='gray')
 axes[1].set_title("displaced cameraman by [150.7, 110.4]")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel('x')
+axes[1].set_ylabel('y')
 plt.tight_layout()
 plt.show()
-'''
+
 # Q4.d
 ryan = cv2.imread(filename='../given_data/Ryan.jpg')
 gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
@@ -381,5 +403,87 @@ axes[0].imshow(gray_ryan, cmap='gray')
 axes[0].set_title("original grayscale ryan")
 axes[1].imshow(filtered_ryan, cmap='gray')
 axes[1].set_title("filtered ryan")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel('x')
+axes[1].set_ylabel('y')
 plt.tight_layout()
 plt.show()
+
+# Q4e
+def rotating_img_draft(image, theta):
+    """
+ Calculate the displacement of a pixel using a bilinear interpolation.
+ :param image: the image to rotate.
+ :param theta: Angle of rotation in radians.
+ :return:
+ rotated_image: The new displaced image
+ """
+    (rows, cols) = np.shape(image)
+
+    mid_x = (cols/2) if (cols % 2 == 0) else ((cols+1)/2)
+    mid_y = (rows / 2) if (rows % 2 == 0) else ((rows + 1) / 2)
+
+    original_grid = [np.array([row, col]) for row in range(rows) for col in range(cols)]
+
+    rotation_matrix = np.array([np.cos(theta), np.sin(theta), -np.sin(theta), np.cos(theta)]).reshape((2, 2))
+    rotated_image = np.zeros((rows, cols))
+
+    shifted_grid = [np.array([point[0] - mid_y, point[1] - mid_x]) for point in original_grid]
+
+    rotated_grid = [np.matmul(rotation_matrix, np.array([point[0], point[1]]).reshape(2,1)) for point in shifted_grid]
+
+    shifted_rotated_grid_n = [np.array([point[0] - mid_y + 1, point[1] - mid_x + 1]) for point in rotated_grid]
+#    shifted_rotated_grid_n = [np.array([int(point[0]), int(point[1])]) for point in shifted_rotated_grid]
+    for i,p in enumerate(shifted_rotated_grid_n):
+        if p[0] > mid_y:
+            shifted_rotated_grid_n[i][0] = rows - 1
+        if p[0] < 0:
+            shifted_rotated_grid_n[i][0] = 0
+        if p[1] > mid_x:
+            shifted_rotated_grid_n[i][1] = cols - 1
+        if p[1] < 0:
+            shifted_rotated_grid_n[i][1] = 0
+    #print(max([p[1] for p in shifted_rotated_grid_n]))
+    for pr, po in zip(shifted_rotated_grid_n, original_grid):
+        rotated_image[int(pr[0])][int(pr[1])] = image[po[0]][po[1]]
+
+    return rotated_image
+
+def rotating_img(image, theta):
+    """
+ Calculate the displacement of a pixel using a bilinear interpolation.
+ :param image: the image to rotate.
+ :param theta: Angle of rotation in radians.
+ :return:
+ rotated_image: The new displaced image
+ """
+    (rows, cols) = np.shape(image)
+    dx = (np.sqrt(512))*np.cos(theta)
+    dy = (np.sqrt(512))*np.sin(theta)
+    rotated_image = general_displacement(dx,dy,image)
+
+    return rotated_image
+
+'''
+rotated_ryan = rotating_img_draft(gray_ryan, np.deg2rad(90))
+plt.imshow(rotated_ryan, cmap='gray')
+plt.title('rotated ryan by angle of: pi/4')
+plt.tight_layout()
+plt.show()
+'''
+'''
+mat = np.array([[1,2,12],[3,4,34],[5,6,56]])
+rotated_ryan = rotating_img(mat, np.deg2rad(90))
+print(rotated_ryan)
+
+fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
+axes[0].imshow(mat, cmap='gray')
+axes[0].set_title("original grayscale ryan")
+axes[1].imshow(rotated_ryan, cmap='gray')
+axes[1].set_title("rotated ryan")
+plt.tight_layout()
+plt.show()
+'''
+
+
