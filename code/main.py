@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import cv2
 
 # --------------------------------------------------Q1-------------------------------------------------- #
+import scipy.signal
+
 '''
 # Q1.a
 # imread() returns uint8 ndarray with BGR color channel
@@ -73,11 +75,11 @@ xy_inv = np.fft.ifft2(np.fft.ifftshift(freq_lkdirection))
 
 fig132, axes = plt.subplots(1, 3, figsize=(15, 15))
 axes[0].imshow(np.abs(x_inv), cmap='gray')
-axes[0].set_title('Grayscale of the building with vertical filter')
+axes[0].set_title('Grayscale of the building with l filter')
 axes[1].imshow(np.abs(y_inv), cmap='gray')
-axes[1].set_title('Grayscale of the building with horizontal filter')
+axes[1].set_title('Grayscale of the building with k filter')
 axes[2].imshow(np.abs(xy_inv), cmap='gray')
-axes[2].set_title('Grayscale of the building with vertical and horizontal filters')
+axes[2].set_title('Grayscale of the building with l and k filters')
 plt.tight_layout()
 plt.show()
 
@@ -205,7 +207,7 @@ axes[1].imshow(np.abs(np.fft.ifft2(np.fft.ifftshift(ampRdm_phasePort))), cmap='g
 axes[1].set_title("Portrait Phase with Random Amplitude")
 plt.tight_layout()
 plt.show()
-'''
+
 # --------------------------------------------------Q3-------------------------------------------------- #
 
 def func(x, y):
@@ -382,7 +384,7 @@ axes[1].set_xlabel('x')
 axes[1].set_ylabel('y')
 plt.tight_layout()
 plt.show()
-
+'''
 # Q4.d
 ryan = cv2.imread(filename='../given_data/Ryan.jpg')
 gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
@@ -390,18 +392,20 @@ gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
 (row, col) = np.shape(gray_ryan)
 filter = np.zeros((row, col))
 
-radius = row / 6
+radius = 140
+x0 = 50
+y0 = 384
 
 x, y = np.indices(gray_ryan.shape)
-mask = (x - row / 4) ** 2 + (y - 3 * col / 4) ** 2 <= radius ** 2
-filter[mask] = 1
+mask1 = ((radius ** 2 - (y - y0) ** 2) >= (x - x0) ** 2) * (x > x0)
+filter[mask1] = 1
 
-filtered_ryan = np.multiply(filter, gray_ryan)
+ryan_win = np.multiply(filter, gray_ryan)
 
 fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
 axes[0].imshow(gray_ryan, cmap='gray')
 axes[0].set_title("original grayscale ryan")
-axes[1].imshow(filtered_ryan, cmap='gray')
+axes[1].imshow(ryan_win, cmap='gray')
 axes[1].set_title("filtered ryan")
 axes[0].set_xlabel('x')
 axes[0].set_ylabel('y')
@@ -410,46 +414,8 @@ axes[1].set_ylabel('y')
 plt.tight_layout()
 plt.show()
 
+
 # Q4e
-def rotating_img_draft(image, theta):
-    """
- Calculate the displacement of a pixel using a bilinear interpolation.
- :param image: the image to rotate.
- :param theta: Angle of rotation in radians.
- :return:
- rotated_image: The new displaced image
- """
-    (rows, cols) = np.shape(image)
-
-    mid_x = (cols/2) if (cols % 2 == 0) else ((cols+1)/2)
-    mid_y = (rows / 2) if (rows % 2 == 0) else ((rows + 1) / 2)
-
-    original_grid = [np.array([row, col]) for row in range(rows) for col in range(cols)]
-
-    rotation_matrix = np.array([np.cos(theta), np.sin(theta), -np.sin(theta), np.cos(theta)]).reshape((2, 2))
-    rotated_image = np.zeros((rows, cols))
-
-    shifted_grid = [np.array([point[0] - mid_y, point[1] - mid_x]) for point in original_grid]
-
-    rotated_grid = [np.matmul(rotation_matrix, np.array([point[0], point[1]]).reshape(2,1)) for point in shifted_grid]
-
-    shifted_rotated_grid_n = [np.array([point[0] - mid_y + 1, point[1] - mid_x + 1]) for point in rotated_grid]
-#    shifted_rotated_grid_n = [np.array([int(point[0]), int(point[1])]) for point in shifted_rotated_grid]
-    for i,p in enumerate(shifted_rotated_grid_n):
-        if p[0] > mid_y:
-            shifted_rotated_grid_n[i][0] = rows - 1
-        if p[0] < 0:
-            shifted_rotated_grid_n[i][0] = 0
-        if p[1] > mid_x:
-            shifted_rotated_grid_n[i][1] = cols - 1
-        if p[1] < 0:
-            shifted_rotated_grid_n[i][1] = 0
-    #print(max([p[1] for p in shifted_rotated_grid_n]))
-    for pr, po in zip(shifted_rotated_grid_n, original_grid):
-        rotated_image[int(pr[0])][int(pr[1])] = image[po[0]][po[1]]
-
-    return rotated_image
-
 def rotating_img(image, theta):
     """
  Calculate the displacement of a pixel using a bilinear interpolation.
@@ -459,19 +425,34 @@ def rotating_img(image, theta):
  rotated_image: The new displaced image
  """
     (rows, cols) = np.shape(image)
-    dx = (np.sqrt(512))*np.cos(theta)
-    dy = (np.sqrt(512))*np.sin(theta)
-    rotated_image = general_displacement(dx,dy,image)
+
+    mid_x = int((cols/2) if (cols % 2 == 0) else ((cols+1)/2))
+    mid_y = int((rows / 2) if (rows % 2 == 0) else ((rows + 1) / 2))
+
+    rotation_matrix = np.array([np.cos(theta), np.sin(theta), -np.sin(theta), np.cos(theta)]).reshape((2, 2))
+    rotated_image = np.zeros((rows, cols))
+
+    original_grid = [np.array([row, col]) for row in range(rows) for col in range(cols)]
+    shifted_grid = [np.array([point[0] - mid_y, point[1] - mid_x]) for point in original_grid]
+    rotated_grid = [np.matmul(rotation_matrix, np.array([point[0], point[1]]).T) for point in shifted_grid]
+    rounded_rotated_grid = [np.array([int(round(point[0])), int(round(point[1]))]) for point in rotated_grid]
+    transformed_grid = [np.array([point[0] + mid_y, point[1] + mid_x]) for point in rounded_rotated_grid]
+
+    for pt, po in zip(transformed_grid, original_grid):
+        if not(pt[0] > rows-1 or pt[0] < 0 or pt[1] > cols-1 or pt[1] < 0):
+            rotated_image[pt[0]][pt[1]] = image[po[0]][po[1]]
 
     return rotated_image
-
 '''
-rotated_ryan = rotating_img_draft(gray_ryan, np.deg2rad(90))
+rotated_ryan = rotating_img(gray_ryan, np.deg2rad(45))
 plt.imshow(rotated_ryan, cmap='gray')
-plt.title('rotated ryan by angle of: pi/4')
+plt.title('rotated ryan by angle of: ')
 plt.tight_layout()
 plt.show()
 '''
+
+
+
 '''
 mat = np.array([[1,2,12],[3,4,34],[5,6,56]])
 rotated_ryan = rotating_img(mat, np.deg2rad(90))
