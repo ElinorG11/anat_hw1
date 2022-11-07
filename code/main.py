@@ -5,7 +5,7 @@ import cv2
 # --------------------------------------------------Q1-------------------------------------------------- #
 import scipy.signal
 
-'''
+
 # Q1.a
 # imread() returns uint8 ndarray with BGR color channel
 building = cv2.imread(filename='../my_data/building.jpg')
@@ -384,7 +384,7 @@ axes[1].set_xlabel('x')
 axes[1].set_ylabel('y')
 plt.tight_layout()
 plt.show()
-'''
+
 # Q4.d
 ryan = cv2.imread(filename='../given_data/Ryan.jpg')
 gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
@@ -443,28 +443,26 @@ def rotating_img(image, theta):
             rotated_image[pt[0]][pt[1]] = image[po[0]][po[1]]
 
     return rotated_image
-'''
-rotated_ryan = rotating_img(gray_ryan, np.deg2rad(45))
-plt.imshow(rotated_ryan, cmap='gray')
-plt.title('rotated ryan by angle of: ')
+
+rotated_ryan_30 = rotating_img(ryan_win, np.deg2rad(30))
+rotated_ryan_45 = rotating_img(ryan_win, np.deg2rad(45))
+rotated_ryan_90 = rotating_img(ryan_win, np.deg2rad(90))
+
+fig45, axes = plt.subplots(1, 3, figsize=(10, 10))
+axes[0].imshow(rotated_ryan_30, cmap='gray')
+axes[0].set_title(r"rotated windowed Ryan by 30$\deg$")
+axes[1].imshow(rotated_ryan_45, cmap='gray')
+axes[1].set_title(r"rotated windowed Ryan by 45$\deg$")
+axes[2].imshow(rotated_ryan_90, cmap='gray')
+axes[2].set_title(r"rotated windowed Ryan by 90$\deg$")
+axes[0].set_xlabel('x')
+axes[0].set_ylabel('y')
+axes[1].set_xlabel('x')
+axes[1].set_ylabel('y')
+axes[2].set_xlabel('x')
+axes[2].set_ylabel('y')
 plt.tight_layout()
 plt.show()
-'''
 
-
-
-'''
-mat = np.array([[1,2,12],[3,4,34],[5,6,56]])
-rotated_ryan = rotating_img(mat, np.deg2rad(90))
-print(rotated_ryan)
-
-fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
-axes[0].imshow(mat, cmap='gray')
-axes[0].set_title("original grayscale ryan")
-axes[1].imshow(rotated_ryan, cmap='gray')
-axes[1].set_title("rotated ryan")
-plt.tight_layout()
-plt.show()
-'''
 
 
