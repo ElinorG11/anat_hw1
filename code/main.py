@@ -403,13 +403,11 @@ mask1 = ((radius ** 2 - (y - y0) ** 2) >= (x - x0) ** 2) * (x > x0)
 filter[mask1] = 1
 
 ryan_win = np.multiply(filter, gray_ryan)
-print(np.where(ryan_win != 0))
 fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
 axes[0].imshow(gray_ryan, cmap='gray')
 axes[0].set_title("original grayscale ryan")
 axes[1].imshow(ryan_win, cmap='gray')
 axes[1].set_title("filtered ryan")
-plt.scatter(384,50+radius/2,color='red')
 axes[0].set_xlabel('x')
 axes[0].set_ylabel('y')
 axes[1].set_xlabel('x')
