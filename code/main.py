@@ -1,3 +1,4 @@
+import numpy
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
@@ -392,21 +393,23 @@ gray_ryan = cv2.cvtColor(ryan, cv2.COLOR_BGR2GRAY)
 (row, col) = np.shape(gray_ryan)
 filter = np.zeros((row, col))
 
+# empirically determined values
 radius = 140
 x0 = 50
-y0 = 384
+y0 = 370
 
 x, y = np.indices(gray_ryan.shape)
 mask1 = ((radius ** 2 - (y - y0) ** 2) >= (x - x0) ** 2) * (x > x0)
 filter[mask1] = 1
 
 ryan_win = np.multiply(filter, gray_ryan)
-
+print(np.where(ryan_win != 0))
 fig44, axes = plt.subplots(1, 2, figsize=(10, 10))
 axes[0].imshow(gray_ryan, cmap='gray')
 axes[0].set_title("original grayscale ryan")
 axes[1].imshow(ryan_win, cmap='gray')
 axes[1].set_title("filtered ryan")
+plt.scatter(384,50+radius/2,color='red')
 axes[0].set_xlabel('x')
 axes[0].set_ylabel('y')
 axes[1].set_xlabel('x')
@@ -426,8 +429,13 @@ def rotating_img(image, theta):
  """
     (rows, cols) = np.shape(image)
 
-    mid_x = int((cols/2) if (cols % 2 == 0) else ((cols+1)/2))
-    mid_y = int((rows / 2) if (rows % 2 == 0) else ((rows + 1) / 2))
+    radius = 140
+    x0 = 50
+    y0 = 370
+
+    mid_x = int(y0)
+    mid_y = int(x0 + radius/2)
+
 
     rotation_matrix = np.array([np.cos(theta), np.sin(theta), -np.sin(theta), np.cos(theta)]).reshape((2, 2))
     rotated_image = np.zeros((rows, cols))
